@@ -1,123 +1,60 @@
+// --- APP INITIALIZATION ---
 $(document).ready(function() {
-    // File Picker UI - Click to upload
-    $('#fileZone').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        document.getElementById('filePicker').click();
+    console.log("Thumb Tasks: Ready");
+
+    const $fileZone = $('#fileZone');
+    const $filePicker = $('#filePicker');
+    const $todoInput = $('#todo-input');
+    const $todoList = $('#todo-list');
+
+    // --- 1. FILE UPLOAD & DRAG 'N DROP LOGIC ---
+
+    // Click to open file picker
+    $fileZone.on('click', function(e) {
+        // Prevents infinite loop if the input itself is the target
+        if (e.target !== $filePicker[0]) {
+            $filePicker.click();
+        }
     });
 
-    // Handle file selection via click
-    $('#filePicker').on('change', function(e) {
+    // Prevent browser from opening dropped files globally
+    $(document).on('dragover dragenter dragleave drop', function(e) {
         e.preventDefault();
         e.stopPropagation();
+    });
+
+    // Hover visual effects
+    $fileZone.on('dragover dragenter', function() {
+        $(this).addClass('dragover');
+    });
+
+    $fileZone.on('dragleave dragend drop', function() {
+        $(this).removeClass('dragover');
+    });
+
+    // Handle File Drop
+    $fileZone.on('drop', function(e) {
+        const droppedFiles = e.originalEvent.dataTransfer.files;
+        if (droppedFiles.length > 0) {
+            $filePicker[0].files = droppedFiles; // Manually assign files to input
+            $filePicker.trigger('change'); // Trigger UI update
+        }
+    });
+
+    // Update UI when file is selected (via click or drop)
+    $filePicker.on('change', function() {
         if (this.files && this.files[0]) {
             const fileName = this.files[0].name;
             $('#fileName').html(`Selected: <strong>${fileName}</strong>`);
-            $('#fileZone').css('border-color', 'var(--cobalt)');
-        } else {
-            $('#fileName').text("Select file to upload");
-            $('#fileZone').css('border-color', 'var(--gray-200)');
+            $fileZone.css('border-color', '#0047AB');
         }
     });
 
-    // Upload button functionality
-    $('#uploadBtn').on('click', function(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const fileInput = document.getElementById('filePicker');
-        const folderId = $('#folderId').val();
-        const isFolderIdTab = $('#tabFolderId').hasClass('active');
-        
-        // Check if user is connected to Drive
-        if (!$('.drive-badge').hasClass('connected')) {
-            alert('Please connect to Google Drive first');
-            return;
-        }
-        
-        // Check if file is selected
-        if (!fileInput.files || !fileInput.files[0]) {
-            alert('Please select a file to upload');
-            return;
-        }
-        
-        const file = fileInput.files[0];
-        
-        // Show uploading status
-        const originalText = $('#uploadBtn').html();
-        $('#uploadBtn').html('<i class="fas fa-spinner fa-spin"></i> Uploading...').prop('disabled', true);
-        
-        // Here you would add the actual Google Drive upload code
-        // For now, we'll simulate an upload
-        setTimeout(() => {
-            alert(`File "${file.name}" uploaded successfully to ${isFolderIdTab ? 'folder' : 'My Drive'}!`);
-            $('#fileName').text("Select file to upload");
-            $('#fileZone').css('border-color', 'var(--gray-200)');
-            $('#filePicker').val(''); // Clear the file input
-            $('#uploadBtn').html('<i class="fas fa-upload"></i> Upload').prop('disabled', false);
-        }, 2000);
-    });
 
-    // Drag & Drop functionality
-    const fileZone = document.getElementById('fileZone');
-    
-    // Prevent default drag behaviors
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-        fileZone.addEventListener(eventName, preventDefaults, false);
-        document.body.addEventListener(eventName, preventDefaults, false);
-    });
+    // --- 2. TASK MANAGEMENT LOGIC ---
 
-    function preventDefaults(e) {
-        e.preventDefault();
-        e.stopPropagation();
-    }
-
-    // Highlight drop zone when dragging over
-    ['dragenter', 'dragover'].forEach(eventName => {
-        fileZone.addEventListener(eventName, highlight, false);
-    });
-
-    ['dragleave', 'drop'].forEach(eventName => {
-        fileZone.addEventListener(eventName, unhighlight, false);
-    });
-
-    function highlight() {
-        fileZone.classList.add('highlight');
-        fileZone.style.borderColor = 'var(--cobalt)';
-        fileZone.style.background = 'rgba(0, 71, 171, 0.05)';
-    }
-
-    function unhighlight() {
-        fileZone.classList.remove('highlight');
-        fileZone.style.borderColor = 'var(--gray-200)';
-        fileZone.style.background = '';
-    }
-
-    // Handle dropped files
-    fileZone.addEventListener('drop', handleDrop, false);
-
-    function handleDrop(e) {
-        const dt = e.dataTransfer;
-        const files = dt.files;
-
-        if (files && files.length > 0) {
-            // Update the file input with dropped files
-            const fileInput = document.getElementById('filePicker');
-            fileInput.files = files;
-            
-            // Manually trigger change event
-            const fileName = files[0].name;
-            $('#fileName').html(`Selected: <strong>${fileName}</strong>`);
-            $('#fileZone').css('border-color', 'var(--cobalt)');
-            
-            // Trigger change event
-            $(fileInput).trigger('change');
-        }
-    }
-
-    // 1. Add Task Logic
     const addTask = () => {
-        const taskName = $('#todo-input').val().trim();
+        const taskName = $todoInput.val().trim();
         if (taskName === "") return;
 
         const taskHtml = `
@@ -130,62 +67,137 @@ $(document).ready(function() {
             </div>
         `;
         
-        $('#todo-list').prepend(taskHtml);
-        $('#todo-input').val('').focus();
+        $todoList.prepend(taskHtml);
+        $todoInput.val('').focus();
     };
 
     $('#add-btn').on('click', addTask);
-    $('#todo-input').on('keypress', (e) => { if (e.which === 13) addTask(); });
+    $todoInput.on('keypress', (e) => { if (e.which === 13) addTask(); });
 
-    // 2. Toggle Task Status
-    $('#todo-list').on('click', '.todo-item', function(e) {
+    // Toggle Task Done
+    $todoList.on('click', '.todo-item', function(e) {
         if (!$(e.target).hasClass('delete-btn')) {
             $(this).toggleClass('completed');
         }
     });
 
-    // 3. Handle Delete
-    $('#todo-list').on('click', '.delete-btn', function(e) {
+    // Delete Task
+    $todoList.on('click', '.delete-btn', function(e) {
         e.stopPropagation();
         $(this).closest('.todo-item').fadeOut(200, function() { 
             $(this).remove(); 
         });
     });
 
-    // 4. Tab Switching
+
+    // --- 3. FOLDER TABS LOGIC ---
     $('.option-tab').on('click', function() {
         $('.option-tab').removeClass('active');
         $(this).addClass('active');
-        if ($(this).attr('id') === 'tabFolderId') {
-            $('#folderIdGroup').addClass('active');
+        
+        if ($(this).attr('id') === 'tabFolderUrl') {
+            $('#folderUrlGroup').show().addClass('active');
         } else {
-            $('#folderIdGroup').removeClass('active');
+            $('#folderUrlGroup').hide().removeClass('active');
         }
     });
 
-    // Sample task for demonstration
-    const sampleTask = `
-        <div class="todo-item">
-            <div class="todo-content">
-                <i class="fas fa-check-circle todo-check-mark"></i>
-                <span class="todo-name">Sample task - click to complete</span>
-            </div>
-            <button class="delete-btn">Delete</button>
-        </div>
-    `;
-    $('#todo-list').append(sampleTask);
+
+    // --- 4. GOOGLE DRIVE UPLOAD LOGIC ---
+
+    $('#uploadBtn').on('click', async function() {
+        const file = $filePicker[0].files[0];
+        const $btn = $(this);
+        const $statusText = $('#fileName');
+
+        if (!file) {
+            $btn.addClass('sync-error').text("No File Selected");
+            setTimeout(() => $btn.removeClass('sync-error').html('<i class="fas fa-upload"></i> Sync Now'), 2000);
+            return;
+        }
+
+        const token = gapi.client.getToken();
+        if (!token) return tokenClient.requestAccessToken();
+
+        // UI: Loading State
+        $btn.html('<i class="fas fa-spinner fa-spin"></i> Uploading...').prop('disabled', true);
+        $statusText.text(`Syncing ${file.name}...`);
+
+        // Determine Folder Destination
+        let folderId = 'root';
+        if ($('#tabFolderUrl').hasClass('active')) {
+            const rawLink = $('#folderUrl').val().trim();
+            
+            if (rawLink) {
+
+                const match = rawLink.match(/\/folders\/([a-zA-Z0-9-_]+)/);
+                if (match && match[1]) {
+                    folderId = match[1];
+                } else {
+
+                    folderId = rawLink;
+                }
+            }
+        }
+        const metadata = {
+            name: file.name,
+            mimeType: file.type,
+            parents: [folderId]
+        };
+
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', file);
+
+        try {
+            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: new Headers({ 'Authorization': 'Bearer ' + token.access_token }),
+                body: form
+            });
+
+            if (response.ok) {
+                // UI: Success State
+                $btn.addClass('sync-success').html('<i class="fas fa-check"></i> Successfully Uploaded');
+                $statusText.addClass('upload-complete').html(`<i class="fas fa-check-circle"></i> ${file.name} is now on Drive`);
+                
+                // Clean up after 3 seconds
+                setTimeout(() => {
+                    $btn.removeClass('sync-success').html('<i class="fas fa-upload"></i> Upload Now').prop('disabled', false);
+                    $statusText.removeClass('upload-complete').text("Select file to upload");
+                    $filePicker.val(''); // Clear the actual file input
+                    $fileZone.css('border-color', '');
+                }, 3000);
+
+            } else {
+                throw new Error("Upload Failed");
+            }
+        } catch (err) {
+            // UI: Error State
+            $btn.addClass('sync-error').html('<i class="fas fa-times"></i> Upload Failed');
+            $statusText.text("Try again or check connection.");
+            
+            setTimeout(() => {
+                $btn.removeClass('sync-error').html('<i class="fas fa-upload"></i> Upload Now').prop('disabled', false);
+            }, 3000);
+        }
+    });
 });
 
-// --- Google Drive Integration ---
+
+// --- 5. GOOGLE API AUTHENTICATION ---
+
 let tokenClient;
 const CLIENT_ID = '676563501230-fkqhj9gfb91ra93kthhhccgq721f1mv8.apps.googleusercontent.com';
 const API_KEY = 'AIzaSyDoXGOHXja_gjgwkOAgw_EuNminNMcxjJY';
 
 function gapiLoaded() {
-    gapi.load('client', () => gapi.client.init({ 
-        apiKey: API_KEY, 
-        discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] 
-    }));
+    gapi.load('client', () => {
+        gapi.client.init({ 
+            apiKey: API_KEY, 
+            discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] 
+        });
+    });
 }
 
 function gisLoaded() {
@@ -201,20 +213,10 @@ function gisLoaded() {
     });
 }
 
-$('#authBtn').click(() => {
-    if (tokenClient) {
-        tokenClient.requestAccessToken();
-    } else {
-        alert('Google Identity Services not loaded yet. Please refresh the page.');
-    }
+// Attach auth trigger to badge
+$(document).on('click', '#authBtn', function() {
+    tokenClient.requestAccessToken();
 });
 
-// Initialize Google APIs when page loads
-window.addEventListener('load', () => { 
-    if (typeof gapi !== 'undefined' && typeof google !== 'undefined') {
-        gapiLoaded(); 
-        gisLoaded();
-    } else {
-        console.error('Google APIs failed to load');
-    }
-});
+// Initialize on window load
+window.onload = () => { gapiLoaded(); gisLoaded(); };

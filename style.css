@@ -15,8 +15,6 @@
 
 * {
     box-sizing: border-box;
-    margin: 0;
-    padding: 0;
 }
 
 body {
@@ -138,10 +136,6 @@ body {
     border: 1px solid var(--gray-200);
     border-radius: var(--radius-md);
     outline: none;
-}
-
-.todo-input-container input:focus {
-    border-color: var(--cobalt);
 }
 
 /* Task List */
@@ -292,11 +286,6 @@ body {
     font-size: 12px;
     border: 1px solid var(--gray-200);
     border-radius: 8px;
-    outline: none;
-}
-
-.input-wrapper input:focus {
-    border-color: var(--cobalt);
 }
 
 .file-upload-area {
@@ -306,12 +295,6 @@ body {
     border: 2px dashed var(--gray-200);
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: var(--transition);
-}
-
-.file-upload-area:hover {
-    border-color: var(--cobalt);
-    background: rgba(0, 71, 171, 0.05);
 }
 
 .file-upload-area i {
@@ -333,19 +316,32 @@ body {
     align-items: center;
     justify-content: center;
     gap: 10px;
-    transition: var(--transition);
 }
 
-.btn-primary:hover {
-    background: #003580;
+/* Feedback States */
+.sync-success {
+    background-color: #27ae60 !important;
+    border-color: #27ae60 !important;
+    color: white !important;
 }
 
-.file-upload-area.highlight {
-    border-color: var(--cobalt) !important;
-    background: rgba(0, 71, 171, 0.05) !important;
+.sync-error {
+    background-color: #e74c3c !important;
+    border-color: #e74c3c !important;
 }
 
-.file-upload-area.dragover {
-    border-color: var(--cobalt);
-    background: rgba(0, 71, 171, 0.05);
+/* Status text animation */
+#fileName.upload-complete {
+    color: #27ae60;
+    font-weight: 700;
+}
+
+/* Icon rotation for loading */
+.fa-spin {
+    animation: fa-spin 1s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(359deg); }
 }
