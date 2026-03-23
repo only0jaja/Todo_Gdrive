@@ -1,87 +1,114 @@
-body{
-	font-family: 'Roboto', sans-serif;
-	background: linear-gradient(to left, #c0c0aa , #1ce);
-}
-
-h1 {
-	background: #2980b9;
-	color: white;
-	margin: 0;
-	padding: 10px 20px;
-	text-transform: uppercase;
-	font-size: 24px;
-	font-weight: normal;
-}
-
-h1 i {
-	float: right;
-	cursor: pointer;
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(to right, #ece9e6, #ffffff);
+    height: 100vh;
+    display: flex;
+    align-items: center;
 }
 
 #container {
-	width: 360px;
-	margin: 100px auto;
-	box-shadow: 0 0 3px rgba(0,0,0,0.5);
-	background: #f7f7f7;
+    width: 400px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 
-ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+h1 {
+    background: #2980b9;
+    color: white;
+    margin: 0;
+    padding: 20px;
+    text-transform: uppercase;
+    font-size: 20px;
+    letter-spacing: 1px;
 }
 
-#container li {
-	cursor: pointer;
-	background: white;
-	height: 40px;
-	line-height: 40px;
-	color: #666;
+h1 i { float: right; cursor: pointer; }
+
+input[type="text"] {
+    font-size: 18px;
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    border: none;
+    border-bottom: 2px solid #2980b9;
+    background: #f9f9f9;
 }
 
-#container li:nth-child(2n) {
-	background: #f7f7f7;
+ul { list-style: none; padding: 0; margin: 0; }
+
+li {
+    background: #fff;
+    height: 50px;
+    line-height: 50px;
+    color: #444;
+    border-bottom: 1px solid #eee;
+    transition: 0.2s;
 }
 
-.completed {
-	text-decoration: line-through;
-	color: gray;
-}
-
-input {
-	font-size: 18px;
-	background-color: #f7f7f7;
-	width: 100%;
-	padding: 13px 13px 13px 20px;
-	box-sizing: border-box;
-	color: #2980b9;
-	border: 3px solid rgba(0,0,0,0);
-	
-}
-
-.slide {
-	display: none;
-}
-
-input:focus{
-	background: white;
-	outline: none;
-	border: 3px solid #2980b9;
-}
+li:hover { background: #fcfcfc; }
 
 li span {
-	background: #e74c3c;
-	color: white;
-	height: 40px;
-	display: inline-block;
-	margin-right: 20px;
-	width: 0;
-	transition: all .5s;
-	text-align: center;
-	opacity: 0;
+    background: #e74c3c;
+    height: 50px;
+    width: 0;
+    display: inline-block;
+    text-align: center;
+    color: white;
+    margin-right: 15px;
+    transition: 0.3s;
+    opacity: 0;
 }
 
-li:hover span {
-	width: 40px;
-	opacity: 1;
+li:hover span { width: 45px; opacity: 1; }
+
+.completed {
+    color: #bdc3c7;
+    text-decoration: line-through;
 }
+
+/* --- Upload UI Updates --- */
+.file-upload {
+    padding: 20px;
+    background: #f1f3f5;
+    border-top: 1px solid #ddd;
+}
+
+.file-upload h3 { margin-top: 0; font-size: 16px; color: #2c3e50; }
+
+.upload-controls { display: flex; gap: 10px; margin-top: 10px; }
+
+#todo-file { display: none; }
+
+#file-label {
+    flex-grow: 1;
+    background: white;
+    padding: 8px;
+    border: 1px dashed #2980b9;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    text-align: center;
+}
+
+#upload-btn {
+    background: #27ae60;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+#upload-status {
+    margin-top: 10px;
+    font-size: 13px;
+    padding: 5px;
+    border-radius: 4px;
+    display: none;
+}
+
+.success { color: #27ae60; }
+.error { color: #e74c3c; }
