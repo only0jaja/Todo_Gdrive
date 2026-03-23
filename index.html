@@ -2,92 +2,198 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thumb Tasks</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="style.css">
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <title>To Do List with Google Drive Upload</title>
+    <link rel="stylesheet" href="./style.css">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
+    <style>
+        /* Additional styles for upload section */
+        .file-upload {
+            margin-top: 20px;
+            padding: 15px;
+            border-top: 1px solid #ddd;
+        }
+        
+        #upload-status {
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .loading {
+            background-color: #cce5ff;
+            color: #004085;
+            border: 1px solid #b8daff;
+        }
+        
+        #upload-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .file-info {
+            margin-top: 5px;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        #todo-file {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="header">
-            <div class="header-content">
-                <div class="header-title">
-                    <div class="icon-circle"><i class="fas fa-clock"></i></div>
-                    <div>
-                        <h1>Thumb Tasks</h1>
-                        <p>Task Scheduler & Drive Upload</p>
-                    </div>
-                </div>
-                <button class="drive-badge" id="authBtn">
-                    <i class="fab fa-google-drive"></i>
-                    <span id="statusLabel">Connect Drive</span>
-                </button>
-            </div>
-        </div>
 
-        <div class="add-todo">
-            <button class="plus-icon" id="add-btn">
-                <i class="fas fa-plus"></i>
-            </button>
-            <div class="todo-input-container">
-                <i class="fas fa-pencil-alt"></i>
-                <input type="text" id="todo-input" placeholder="What needs to be done?">
-            </div>
-        </div>
-
-        <div class="todo-list" id="todo-list">
-            </div>
-
-        <div class="drive-section">
-            <div class="drive-card">
-                <div class="drive-title">
-                    <i class="fab fa-google-drive"></i>
-                    <h3>Cloud Destination</h3>
-                </div>
-
-                <div class="option-tabs">
-                    <div class="option-tab active" id="tabRoot">
-                        <i class="fas fa-cloud"></i> My Drive
-                    </div>
-                    <div class="option-tab" id="tabFolderUrl">
-                        <i class="fas fa-link"></i> Folder Link
-                    </div>
-                </div>
-
-                <div class="folder-input-group" id="folderUrlGroup">
-                    <div class="input-wrapper">
-                        <i class="fas fa-link"></i>
-                        <input type="text" id="folderUrl" placeholder="Paste Google Drive folder link here">
-                    </div>
-                    <div class="input-help" style="font-size: 10px; color: var(--gray-600); margin-top: 5px;">
-                        <i class="fas fa-info-circle"></i> e.g., drive.google.com/drive/folders/<strong>1aBc...</strong>
-                    </div>
-                </div>
-
-                <div class="folder-input-group" id="folderIdGroup">
-                    <div class="input-wrapper">
-                        <i class="fas fa-folder-open"></i>
-                        <input type="text" id="folderId" placeholder="Enter Google Folder ID">
-                    </div>
-                </div>
-
-                <div class="file-upload-area" id="fileZone">
-                    <i class="fas fa-cloud-upload-alt"></i>
-                    <p id="fileName">Select file to upload</p>
-                    <input type="file" id="filePicker" hidden>
-                </div>
-
-                <button class="btn-primary" id="uploadBtn">
-                    <i class="fas fa-upload"></i> Upload
-                </button>
-            </div>
-        </div>
+<div id="container">
+    <h1>To-Do List <i class="fa fa-plus"></i></h1>
+    
+    <div class="slide">
+        <input type="text" placeholder="New Item">
     </div>
+    
+    <ul id="todo-list">
+        <li><span><i class="fa fa-trash-o"></i></span>Sample Task</li>
+    </ul>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script src="script.js"></script>
+    <!-- Google Drive Upload Section - NO LOGIN REQUIRED! -->
+    <div class="file-upload">
+        <h3>📁 Upload to Google Drive</h3>
+        <p class="file-info">Files go directly to your Drive folder - no login needed!</p>
+        
+        <input type="file" id="todo-file" accept="*/*">
+        <button id="upload-btn">⬆️ Upload to Drive</button>
+        
+        <div id="upload-status"></div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+<script>
+$(document).ready(function(){
+    // ========== TODO LIST FUNCTIONALITY ==========
+    // Add new todo
+    $('.fa-plus').click(function(){
+        $('input[type="text"]').fadeToggle();
+    });
+
+    $('input[type="text"]').keypress(function(event){
+        if(event.which === 13){
+            var todoText = $(this).val();
+            if(todoText !== ''){
+                $('#todo-list').append('<li><span><i class="fa fa-trash-o"></i></span>' + todoText + '</li>');
+                $(this).val('');
+            }
+        }
+    });
+
+    // Delete todo
+    $('#todo-list').on('click', 'span', function(event){
+        $(this).parent().fadeOut(function(){
+            $(this).remove();
+        });
+        event.stopPropagation();
+    });
+
+    // Mark as completed
+    $('#todo-list').on('click', 'li', function(){
+        $(this).toggleClass('completed');
+    });
+    
+    // ========== GOOGLE DRIVE UPLOAD ==========
+    let uploadBtn = document.getElementById('upload-btn');
+    let fileInput = document.getElementById('todo-file');
+    let statusDiv = document.getElementById('upload-status');
+    
+    // Handle file selection
+    fileInput.addEventListener('change', function(e) {
+        if (this.files.length > 0) {
+            const file = this.files[0];
+            const sizeKB = (file.size / 1024).toFixed(2);
+            statusDiv.innerHTML = `Selected: ${file.name} (${sizeKB} KB)`;
+            statusDiv.className = '';
+        }
+    });
+    
+    // Handle upload button click
+    uploadBtn.addEventListener('click', async function() {
+        const file = fileInput.files[0];
+        
+        // Validate file selection
+        if (!file) {
+            statusDiv.innerHTML = '❌ Please select a file first';
+            statusDiv.className = 'error';
+            return;
+        }
+        
+        // Disable button and show loading
+        uploadBtn.disabled = true;
+        statusDiv.innerHTML = '⏫ Uploading to Google Drive...';
+        statusDiv.className = 'loading';
+        
+        // Prepare form data
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        try {
+            // Send to Flask backend (port 5000)
+            const response = await fetch('http://127.0.0.1:5000/upload', {
+                method: 'POST',
+                body: formData,
+                mode: 'cors'
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Upload failed');
+            }
+            
+            // SUCCESS!
+            statusDiv.innerHTML = `
+                ✅ Upload successful!<br>
+                <strong>File:</strong> ${data.filename}<br>
+                <strong>Drive ID:</strong> ${data.file_id}<br>
+                <a href="${data.view_url}" target="_blank">📎 View in Google Drive</a>
+            `;
+            statusDiv.className = 'success';
+            
+            // Clear file input
+            fileInput.value = '';
+            
+        } catch (error) {
+            console.error('Upload error:', error);
+            
+            // Friendly error messages
+            if (error.message.includes('Failed to fetch')) {
+                statusDiv.innerHTML = '❌ Cannot connect to server. Make sure Flask is running on port 5000';
+            } else {
+                statusDiv.innerHTML = '❌ Error: ' + error.message;
+            }
+            statusDiv.className = 'error';
+            
+        } finally {
+            // Re-enable button
+            uploadBtn.disabled = false;
+        }
+    });
+});
+</script>
+
+<!-- Your existing script.js will still work -->
+<script src="script.js"></script>
+
 </body>
 </html>
