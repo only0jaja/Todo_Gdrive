@@ -19,13 +19,17 @@
     </ul>
 
     <div class="file-upload">
-        <h3><i class="fa fa-cloud-upload"></i> Google Drive Sync</h3>
-        <p class="file-info">Upload logs or attachments directly.</p>
+        <h3><i class="fa fa-cloud-upload"></i> Google Drive Upload</h3>
         
-        <div class="upload-controls">
+        <div id="drop-zone">
+            <i class="fa fa-file-o fa-2x"></i>
+            <p id="file-label">Drag & Drop or Click to Select</p>
             <input type="file" id="todo-file">
-            <label for="todo-file" id="file-label">Choose File</label>
-            <button id="upload-btn">Upload</button>
+        </div>
+
+        <div class="upload-controls">
+            <span id="remove-file"><i class="fa fa-times"></i> Remove File</span>
+            <button id="upload-btn" style="display:none;">Upload</button>
         </div>
         
         <div id="upload-status"></div>
@@ -34,18 +38,21 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
 <script>
-$(document).ready(function(){
-    // --- TASK LOGIC ---
-    // Toggle Input
-    $('.fa-plus').click(function(){
+    $(document).ready(function() {
+    // ==========================================
+    // 1. TASK LIST LOGIC
+    // ==========================================
+
+    // Toggle Input Visibility
+    $('.fa-plus').click(function() {
         $('#todo-input').fadeToggle(200);
     });
 
-    // Add Task
-    $('#todo-input').keypress(function(event){
-        if(event.which === 13){
+    // Add New Task
+    $('#todo-input').keypress(function(event) {
+        if (event.which === 13) {
             let todoText = $(this).val();
-            if(todoText.trim() !== ''){
+            if (todoText.trim() !== '') {
                 $('#todo-list').append('<li><span><i class="fa fa-trash-o"></i></span> ' + todoText + '</li>');
                 $(this).val('');
             }
@@ -53,58 +60,118 @@ $(document).ready(function(){
     });
 
     // Delete Task
-    $('#todo-list').on('click', 'span', function(e){
-        $(this).parent().fadeOut(300, function(){
+    $('#todo-list').on('click', 'span', function(e) {
+        e.stopPropagation(); // Prevent triggering the "completed" toggle
+        $(this).parent().fadeOut(300, function() {
             $(this).remove();
         });
+    });
+
+    // Toggle Completed Status
+    $('#todo-list').on('click', 'li', function() {
+        $(this).toggleClass('completed');
+    });
+
+
+    // ==========================================
+    // 2. DRIVE UPLOAD & DRAG-N-DROP LOGIC
+    // ==========================================
+
+    let selectedFile = null;
+    const $dropZone = $('#drop-zone');
+    const $fileInput = $('#todo-file');
+    const $fileLabel = $('#file-label');
+    const $removeBtn = $('#remove-file');
+    const $uploadBtn = $('#upload-btn');
+    const $status = $("#upload-status");
+
+    $dropZone.on('click', function() {
+        $fileInput.trigger('click');
+    });
+
+    $fileInput.on('click', function(e) {
         e.stopPropagation();
     });
 
-    // Toggle Completed
-    $('#todo-list').on('click', 'li', function(){
-        $(this).toggleClass('completed');
-    });
-    
-    // --- DRIVE UPLOAD LOGIC ---
-    $('#todo-file').change(function() {
-        let filename = $(this).val().split('\\').pop();
-        $('#file-label').text(filename || "Choose File");
+    $fileInput.on('change', function() {
+        handleFiles(this.files);
     });
 
-    $('#upload-btn').on('click', function() {
-        var file = $('#todo-file').prop('files')[0];
-        if (!file) return alert("Select a file!");
 
-        var reader = new FileReader();
-        reader.readAsDataURL(file);
-        
-        $("#upload-status").text("Uploading...").show();
+    $dropZone.on('dragover dragenter', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).addClass('hover');
+    });
 
-        reader.onload = function () {
-            var base64Data = reader.result.split(',')[1];
-            var payload = {
+    $dropZone.on('dragleave drop', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $(this).removeClass('hover');
+    });
+
+    $dropZone.on('drop', function(e) {
+        const files = e.originalEvent.dataTransfer.files;
+        handleFiles(files);
+    });
+
+    function handleFiles(files) {
+        if (files.length > 0) {
+            selectedFile = files[0];
+            $fileLabel.html("<i class='fa fa-file'></i> " + selectedFile.name);
+            $removeBtn.show();
+            $uploadBtn.fadeIn();
+            $status.hide().text("");
+        }
+    }
+
+    $removeBtn.on('click', function(e) {
+        e.stopPropagation(); 
+        selectedFile = null;
+        $fileInput.val(''); 
+        $fileLabel.text("Drag & Drop or Click to Select");
+        $removeBtn.hide();
+        $uploadBtn.fadeOut();
+        $status.hide();
+    });
+
+    $uploadBtn.on('click', function(e) {
+        e.stopPropagation();
+        if (!selectedFile) return;
+
+        const reader = new FileReader();
+        $status.text("Uploading to Drive...").css("color", "#666").show();
+        $uploadBtn.prop('disabled', true).css("opacity", "0.5");
+
+        reader.onload = function() {
+            const base64Data = reader.result.split(',')[1];
+            const payload = {
                 base64: base64Data,
-                type: file.type,
-                name: file.name
+                type: selectedFile.type,
+                name: selectedFile.name
             };
 
             $.ajax({
-                url: 'https://script.google.com/macros/s/AKfycbw2XHqsIbJ9Wn00F8zkc9-4HFWsLIgocIqWAVWf-Z-vN4KX26XZ-dNqaOZcqeSWjcVe/exec', // Paste your Apps Script URL
+                url: 'https://script.google.com/macros/s/AKfycbw2XHqsIbJ9Wn00F8zkc9-4HFWsLIgocIqWAVWf-Z-vN4KX26XZ-dNqaOZcqeSWjcVe/exec',
                 type: 'POST',
-                contentType: 'text/plain', // Apps Script requires this for CORS
+                contentType: 'text/plain',
                 data: JSON.stringify(payload),
                 success: function(res) {
-                    if(res.result === 'success') {
-                        $("#upload-status").html("✅ Success! <a href='"+res.view_url+"' target='_blank'>View File</a>");
+                    $uploadBtn.prop('disabled', false).css("opacity", "1");
+                    if (res.result === 'success') {
+                        $status.html("✅ <a href='" + res.view_url + "' target='_blank' style='color:#27ae60; font-weight:bold;'>View File</a>");
                     } else {
-                        $("#upload-status").text("❌ Error: " + res.error);
+                        $status.text("❌ Error: " + res.error).css("color", "#e74c3c");
                     }
                 },
                 error: function() {
-                    $("#upload-status").text("❌ Upload failed. Check permissions.");
+                    $uploadBtn.prop('disabled', false).css("opacity", "1");
+                    $status.text("❌ Upload failed").css("color", "#e74c3c");
                 }
             });
         };
+
+        reader.readAsDataURL(selectedFile);
     });
 });
 </script>
